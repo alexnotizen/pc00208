@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 8 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:38.4px; font-weight: bold;}
+.progress{text-align:center;font-size:21.6px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:592px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; overflow-y:auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl{color: #7c2d12; font-weight: bold; background-color: #fef08a; padding: 2px 6px; border-radius: 4px; border: 1px solid #eab308;}
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.hl-red { color: #dc2626; font-weight: bold; }
+
+/* Pinyin mặt trước: căn giữa */
+.pinyin{
+  font-size:1.68em;
+  color:#666666;
+  margin-bottom:10px;
+  font-weight:bold;
+  text-align:center;
+  width:100%;
+}
+
+.zh-front { font-size: 2.16em; font-weight: bold; margin-bottom: 6px; line-height: 1.3; color: #dc2626; text-align: center; width: 100%; }
+
+/* Mặt sau */
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.74em; line-height: 1.2; display: inline-block; margin-top: 8px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.2em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.2em; color: #333; display: block; margin-bottom: 10px; }
+
+.desc-front { font-size: 1.38em; color: #333; margin: 8px 0; text-align: left; width: 100%; line-height: 1.4; }
+.desc{font-size: 1.38em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.4;}
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:26.4px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 8 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    f: "<div class='zh-front'>VỘI VÀNG LÀM GÌ ĐÓ</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>急着</span> + Động từ</div>" +
+       "<div class='pinyin'>jízhe</div>" +
+       "<div class='desc-front'>" +
+       "Diễn tả ai đó đang rất sốt ruột, muốn làm một việc gì đó ngay. Động từ đứng sau 急着 chính là mục đích của sự sốt ruột đó." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我急着穿。</span><br><span class='pinyin-back'>Wǒ jízhe chuān.</span><span class='vi-back'>(Tôi đang gấp mặc.)</span>" +
+       "<span class='zh-back'>我急着用。</span><br><span class='pinyin-back'>Wǒ jízhe yòng.</span><span class='vi-back'>(Tôi đang gấp dùng.)</span>" +
+       "<span class='zh-back'>早上我急着去教室，忘了带钥匙。</span><br><span class='pinyin-back'>Zǎoshang wǒ jízhe qù jiàoshì, wàng le dài yàoshi.</span><span class='vi-back'>(Buổi sáng tôi vội đi đến lớp, quên mang chìa khóa.)</span>" +
+       "<span class='zh-back'>别急着走啊，再坐会儿。</span><br><span class='pinyin-back'>Bié jízhe zǒu a, zài zuò huìr.</span><span class='vi-back'>(Đừng vội đi mà, ngồi thêm chút nữa.)</span>" +
+       "<span class='zh-back'>他一进门就急着问：你看见老王了吗？</span><br><span class='pinyin-back'>Tā yí jìn mén jiù jízhe wèn: Nǐ kànjiàn Lǎowáng le ma?</span><span class='vi-back'>(Anh ấy vừa vào cửa đã vội hỏi: Anh có thấy ông Vương không?)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>NẾU… THÌ…</div>" +
+       "<div class='zh-front'>…<span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>的话</span></div>" +
+       "<div class='pinyin'>... de huà</div>" +
+       "<div class='desc-front'>" +
+       "Cách nói điều kiện, giả sử, rất thường dùng trong khẩu ngữ. Trước 的话 có thể có 如果, 要是, 假如 hoặc không cần cũng được." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>急着穿的话，两天也行。</span><br><span class='pinyin-back'>Jízhe chuān de huà, liǎng tiān yě xíng.</span><span class='vi-back'>(Nếu gấp mặc thì hai ngày cũng được.)</span>" +
+       "<span class='zh-back'>这样的话，每件衣服加五块钱。</span><br><span class='pinyin-back'>Zhèyàng de huà, měi jiàn yīfu jiā wǔ kuài qián.</span><span class='vi-back'>(Nếu vậy thì mỗi bộ quần áo thêm năm tệ.)</span>" +
+       "<span class='zh-back'>你去不了的话，可以让别人去。</span><br><span class='pinyin-back'>Nǐ qù bù liǎo de huà, kěyǐ ràng biérén qù.</span><span class='vi-back'>(Nếu bạn không đi được thì có thể để người khác đi.)</span>" +
+       "<span class='zh-back'>做这个工作不认真的话，就会出错。</span><br><span class='pinyin-back'>Zuò zhè gè gōngzuò bú rènzhēn de huà, jiù huì chū cuò.</span><span class='vi-back'>(Nếu làm công việc này không nghiêm túc thì sẽ xảy ra lỗi.)</span>" +
+       "<span class='zh-back'>如果吃中药有效的话，就不用做手术了。</span><br><span class='pinyin-back'>Rúguǒ chī zhōngyào yǒuxiào de huà, jiù bú yòng zuò shǒushù le.</span><span class='vi-back'>(Nếu uống thuốc bắc có hiệu quả thì không cần phẫu thuật nữa.)</span>" +
+       "<span class='zh-back'>要是你不相信的话，那就算了。</span><br><span class='pinyin-back'>Yàoshi nǐ bù xiāngxìn de huà, nà jiù suàn le.</span><span class='vi-back'>(Nếu bạn không tin thì thôi vậy.)</span>" +
+       "<span class='zh-back'>如果你愿意的话，有时还可以花十几块钱在路边的小吃摊儿吃饭。</span><br><span class='pinyin-back'>Rúguǒ nǐ yuànyì de huà, yǒushí hái kěyǐ huā shí jǐ kuài qián zài lùbiān de xiǎochī tānr chīfàn.</span><span class='vi-back'>(Nếu bạn bằng lòng, có khi còn có thể tiêu mười mấy tệ để ăn cơm ở quán ăn vặt ven đường.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>ĐẶC BIỆT LÀ…</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>特别是</span>…</div>" +
+       "<div class='pinyin'>tèbié shì ...</div>" +
+       "<div class='desc-front'>" +
+       "Dùng để nêu ra phần nổi bật nhất, quan trọng nhất trong một nhóm sự vật, sự việc. Sau 特别是 thường là danh từ hoặc động từ." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>能不能再快点儿？特别是那条裙子，我急着穿。</span><br><span class='pinyin-back'>Néng bu néng zài kuài diǎnr? Tèbié shì nà tiáo qúnzi, wǒ jízhe chuān.</span><span class='vi-back'>(Có thể nhanh hơn chút nữa không? Đặc biệt là cái váy đó, tôi đang gấp mặc.)</span>" +
+       "<span class='zh-back'>我们班同学进步都很快，特别是望月。</span><br><span class='pinyin-back'>Wǒmen bān tóngxué jìnbù dōu hěn kuài, tèbié shì Wàngyuè.</span><span class='vi-back'>(Các bạn trong lớp chúng tôi đều tiến bộ rất nhanh, đặc biệt là Vọng Nguyệt.)</span>" +
+       "<span class='zh-back'>今年情况比较好，粮食产量比去年增加了三分之一。</span><br><span class='pinyin-back'>Jīnnián qíngkuàng bǐjiào hǎo, liángshí chǎnliàng bǐ qùnián zēngjiā le sān fēn zhī yī.</span><span class='vi-back'>(Năm nay tình hình khá hơn, sản lượng lương thực tăng một phần ba so với năm ngoái.)</span>" +
+       "<span class='zh-back'>我不喜欢做饭，特别是包饺子，麻烦死了。</span><br><span class='pinyin-back'>Wǒ bù xǐhuan zuò fàn, tèbié shì bāo jiǎozi, máfan sǐ le.</span><span class='vi-back'>(Tôi không thích nấu ăn, đặc biệt là gói sủi cảo, phiền chết đi được.)</span>" +
+       "<span class='zh-back'>我发现望月他们班的同学都特别喜欢打球。是的，特别是望月，各种球都会打。</span><br><span class='pinyin-back'>Wǒ fāxiàn Wàngyuè tāmen bān de tóngxué dōu tèbié xǐhuan dǎ qiú. Shì de, tèbié shì Wàngyuè, gè zhǒng qiú dōu huì dǎ.</span><span class='vi-back'>(Tôi phát hiện các bạn lớp Vọng Nguyệt đều rất thích chơi bóng. Đúng vậy, đặc biệt là Vọng Nguyệt, các loại bóng đều biết chơi.)</span>" +
+       "<span class='zh-back'>这个饭馆儿的菜味道太重了。嗯，特别是那个麻婆豆腐，又咸又辣。</span><br><span class='pinyin-back'>Zhè gè fànguǎnr de cài wèidao tài zhòng le. ǹ, tèbié shì nà gè mápó dòufu, yòu xián yòu là.</span><span class='vi-back'>(Món ăn ở quán này vị quá nặng. Ừ, đặc biệt là món đậu phụ Mapo đó, vừa mặn vừa cay.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>HƠI, MỘT CHÚT</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>稍微</span></div>" +
+       "<div class='pinyin'>shāowēi</div>" +
+       "<div class='desc-front'>" +
+       "Diễn tả số lượng ít hoặc mức độ không sâu. Có 3 cách dùng:<br>" +
+       "1. 稍微 + động từ (lặp lại hoặc có 一, 一会儿, 一下)<br>" +
+       "2. 稍微 + tính từ/động từ + 一点儿/一些<br>" +
+       "3. 稍微 + 不 + tính từ/động từ (thường với 注意, 小心, 留神)" +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>老师马上就来，你们稍微等一等。</span><br><span class='pinyin-back'>Lǎoshī mǎshàng jiù lái, nǐmen shāowēi děng yi děng.</span><span class='vi-back'>(Thầy sắp đến rồi, các em đợi một chút.)</span>" +
+       "<span class='zh-back'>这个书包的带子不结实，稍微一用力就断了。</span><br><span class='pinyin-back'>Zhè gè shūbāo de dàizi bù jiéshi, shāowēi yì yòng lì jiù duàn le.</span><span class='vi-back'>(Dây đeo cặp sách này không chắc, chỉ hơi dùng sức một chút là đứt.)</span>" +
+       "<span class='zh-back'>您稍微等一下，这就来。</span><br><span class='pinyin-back'>Nín shāowēi děng yíxià, zhè jiù lái.</span><span class='vi-back'>(Ngài đợi một chút, tới ngay đây.)</span>" +
+       "<span class='zh-back'>我比她稍微高一点儿。</span><br><span class='pinyin-back'>Wǒ bǐ tā shāowēi gāo yìdiǎnr.</span><span class='vi-back'>(Tôi cao hơn cô ấy một chút.)</span>" +
+       "<span class='zh-back'>最近老董的身体稍微好一些了。</span><br><span class='pinyin-back'>Zuìjìn Lǎodǒng de shēntǐ shāowēi hǎo yìxiē le.</span><span class='vi-back'>(Dạo này sức khỏe ông Đổng khá hơn một chút rồi.)</span>" +
+       "<span class='zh-back'>往汤里稍微加一点儿盐，味道会更好。</span><br><span class='pinyin-back'>Wǎng tāng lǐ shāowēi jiā yìdiǎnr yán, wèidao huì gèng hǎo.</span><span class='vi-back'>(Cho thêm một chút muối vào canh, mùi vị sẽ ngon hơn.)</span>" +
+       "<span class='zh-back'>我长胖了一些，以前的衣服穿起来都稍微小了点儿。</span><br><span class='pinyin-back'>Wǒ zhǎng pàng le yìxiē, yǐqián de yīfu chuān qǐ lái dōu shāowēi xiǎo le diǎnr.</span><span class='vi-back'>(Tôi mập lên một chút, quần áo trước đây mặc vào đều hơi nhỏ.)</span>" +
+       "<span class='zh-back'>路很滑，稍微不小心就会摔倒。</span><br><span class='pinyin-back'>Lù hěn huá, shāowēi bù xiǎoxīn jiù huì shuāidǎo.</span><span class='vi-back'>(Đường rất trơn, chỉ hơi không cẩn thận là sẽ ngã.)</span>" +
+       "<span class='zh-back'>汉语的虚词比较复杂，稍微不注意，就可能用错。</span><br><span class='pinyin-back'>Hànyǔ de xūcí bǐjiào fùzá, shāowēi bú zhùyì, jiù kěnéng yòng cuò.</span><span class='vi-back'>(Hư từ tiếng Hán khá phức tạp, chỉ hơi không chú ý là có thể dùng sai.)</span>" +
+       "<span class='zh-back'>开车的时候一定要小心，稍微不注意就会出危险。</span><br><span class='pinyin-back'>Kāichē de shíhou yí dìng yào xiǎoxīn, shāowēi bú zhùyì jiù huì chū wēixiǎn.</span><span class='vi-back'>(Lái xe nhất định phải cẩn thận, chỉ hơi không chú ý là sẽ gặp nguy hiểm.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>CHUYẾN, LƯỢT</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>趟</span></div>" +
+       "<div class='pinyin'>tàng</div>" +
+       "<div class='desc-front'>" +
+       "Là lượng từ dùng cho hành động đi rồi quay lại, đi một lần rồi về là một 趟. Thường đứng sau động từ, cùng với số từ làm bổ ngữ chỉ số lần." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我出去一趟，取点儿钱。</span><br><span class='pinyin-back'>Wǒ chūqù yí tàng, qǔ diǎnr qián.</span><span class='vi-back'>(Tôi ra ngoài một lát, rút chút tiền.)</span>" +
+       "<span class='zh-back'>昨天李钟文去了一趟超市。</span><br><span class='pinyin-back'>Zuótiān Lǐ Zhōngwén qù le yí tàng chāoshì.</span><span class='vi-back'>(Hôm qua Lý Chung Văn đã đi một chuyến đến siêu thị.)</span>" +
+       "<span class='zh-back'>周末我打算回一趟家。</span><br><span class='pinyin-back'>Zhōumò wǒ dǎsuàn huí yí tàng jiā.</span><span class='vi-back'>(Cuối tuần tôi định về nhà một chuyến.)</span>" +
+       "<span class='zh-back'>我找了飞龙三趟，他都不在。</span><br><span class='pinyin-back'>Wǒ zhǎo le Fēilóng sān tàng, tā dōu bú zài.</span><span class='vi-back'>(Tôi tìm Phi Long ba lần, anh ấy đều không có nhà.)</span>" +
+       "<span class='zh-back'>哎呀，没有盐了，老王，你跑一趟，买一包盐来。</span><br><span class='pinyin-back'>Āiyā, méiyǒu yán le, Lǎowáng, nǐ pǎo yí tàng, mǎi yì bāo yán lái.</span><span class='vi-back'>(Ôi, hết muối rồi, ông Vương, ông chạy một chuyến, mua một gói muối về.)</span>" +
+       "<span class='zh-back'>那儿交通不方便，回去一趟挺不容易的。</span><br><span class='pinyin-back'>Nàr jiāotōng bù fāngbiàn, huíqù yí tàng tǐng bù róngyì de.</span><span class='vi-back'>(Chỗ đó giao thông không tiện, về một chuyến khá khó khăn.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>… HƠN NHIỀU</div>" +
+       "<div class='zh-front'>Tính từ + <span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>多了</span></div>" +
+       "<div class='pinyin'>... duō le</div>" +
+       "<div class='desc-front'>" +
+       "Diễn tả mức độ chênh lệch lớn, thường dùng để so sánh hoặc chỉ sự thay đổi." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>老百姓的生活的确方便多了。</span><br><span class='pinyin-back'>Lǎobǎixìng de shēnghuó díquè fāngbiàn duō le.</span><span class='vi-back'>(Cuộc sống của người dân thực sự đã tiện lợi hơn nhiều.)</span>" +
+       "<span class='zh-back'>这孩子比以前胖多了。</span><br><span class='pinyin-back'>Zhè háizi bǐ yǐqián pàng duō le.</span><span class='vi-back'>(Đứa trẻ này béo hơn trước nhiều rồi.)</span>" +
+       "<span class='zh-back'>有他参加，我们的晚会就热闹多了。</span><br><span class='pinyin-back'>Yǒu tā cānjiā, wǒmen de wǎnhuì jiù rènào duō le.</span><span class='vi-back'>(Có anh ấy tham gia, buổi tiệc tối của chúng tôi sẽ náo nhiệt hơn nhiều.)</span>" +
+       "<span class='zh-back'>跟大商场比，有的东西在网上买便宜多了。</span><br><span class='pinyin-back'>Gēn dà shāngchǎng bǐ, yǒu de dōngxi zài wǎngshàng mǎi piányi duō le.</span><span class='vi-back'>(So với trung tâm thương mại lớn, có đồ mua trên mạng rẻ hơn nhiều.)</span>" +
+       "<span class='zh-back'>那家超市里的东西新鲜多了。</span><br><span class='pinyin-back'>Nà jiā chāoshì lǐ de dōngxi xīnxiān duō le.</span><span class='vi-back'>(Đồ trong siêu thị đó tươi ngon hơn nhiều.)</span>" +
+       "<span class='zh-back'>A: 怎么样了？<br>B: 好多了。</span><br><span class='pinyin-back'>A: Zěnmeyang le? <br>B: Hǎo duō le.</span><span class='vi-back'>(A: Thế nào rồi? <br>B: Đỡ hơn nhiều rồi.)</span>" +
+       "</div>"
+  },
+  {
+    f: "<div class='zh-front'>LẤY… MÀ NÓI</div>" +
+       "<div class='zh-front'><span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>拿</span>…<span style='background-color: #2563eb; color: #ffffff; padding: 2px 6px; border-radius: 4px;'>来说</span></div>" +
+       "<div class='pinyin'>ná ... lái shuō</div>" +
+       "<div class='desc-front'>" +
+       "Dùng để lấy ví dụ, chứng minh điều mình nói là đúng, là thật. Giữa 拿 và 来说 có thể đặt danh từ, cụm danh từ hoặc cụm động từ." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>就拿吃饭来说吧，有高档的大酒店，也有低档的小饭馆儿。</span><br><span class='pinyin-back'>Jiù ná chīfàn lái shuō ba, yǒu gāodàng de dà jiǔdiàn, yě yǒu dīdàng de xiǎo fànguǎnr.</span><span class='vi-back'>(Cứ lấy việc ăn cơm mà nói, có khách sạn lớn cao cấp, cũng có quán ăn nhỏ bình dân.)</span>" +
+       "<span class='zh-back'>我们班每个人都有自己的爱好，拿李钟文来说吧，他是个电脑迷。</span><br><span class='pinyin-back'>Wǒmen bān měi gè rén dōu yǒu zìjǐ de àihào, ná Lǐ Zhōngwén lái shuō ba, tā shì gè diànnǎomí.</span><span class='vi-back'>(Mỗi người trong lớp chúng tôi đều có sở thích riêng, lấy Lý Chung Văn mà nói, anh ấy là một người mê máy tính.)</span>" +
+       "<span class='zh-back'>不同地方的人有不同的口味，拿陕西人来说，就喜欢吃酸辣的。</span><br><span class='pinyin-back'>Bù tóng dìfang de rén yǒu bù tóng de kǒuwèi, ná Shǎnxī rén lái shuō, jiù xǐhuan chī suān là de.</span><span class='vi-back'>(Người ở các nơi khác nhau có khẩu vị khác nhau, lấy người Thiểm Tây mà nói, họ thích ăn chua cay.)</span>" +
+       "<span class='zh-back'>现在一家人都听孩子的，拿看电视来说，孩子要看什么大人们就得看什么。</span><br><span class='pinyin-back'>Xiànzài yì jiā rén dōu tīng háizi de, ná kàn diànshì lái shuō, háizi yào kàn shénme dàren men jiù děi kàn shénme.</span><span class='vi-back'>(Bây giờ cả nhà đều nghe theo con cái, lấy việc xem tivi mà nói, con muốn xem gì thì người lớn phải xem cái đó.)</span>" +
+       "<span class='zh-back'>我们学校的生活很方便，拿吃饭来说吧，食堂里什么都有。</span><br><span class='pinyin-back'>Wǒmen xuéxiào de shēnghuó hěn fāngbiàn, ná chīfàn lái shuō ba, shítáng lǐ shénme dōu yǒu.</span><span class='vi-back'>(Cuộc sống ở trường chúng tôi rất tiện lợi, lấy việc ăn cơm mà nói, trong căng tin có đủ thứ.)</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextCard();
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    prevCard();
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
